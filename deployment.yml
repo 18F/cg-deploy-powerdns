@@ -1,0 +1,54 @@
+---
+name: pdns
+
+releases:
+- name: pdns
+  version: latest
+
+update:
+  canaries: 1
+  canary_watch_time: 3000-180000
+  update_watch_time: 3000-180000
+  max_in_flight: 2
+
+stemcells:
+- alias: default
+  name: bosh-warden-boshlite-ubuntu-trusty-go_agent
+  version: latest
+
+instance_groups:
+- name: pdns_private
+  stemcell: default
+  vm_type: default
+  instances: 1
+  azs: [z1,z2]
+  networks:
+  - name: manual
+    static_ips: [10.244.8.64]
+  jobs:
+  - release: pdns
+    name: pdns
+    properties:
+      pdns_conf: ((private_pdns_conf))
+      named_conf: ((private_named_conf))
+      pipe_conf: ((private_pipe_conf))
+      dnssec:
+        enabled: false
+
+- name: pdns_public
+  instances: 2
+  stemcell: default
+  vm_type: default
+  azs: [z1,z2]
+  networks:
+  - name: manual
+    static_ips: [10.244.8.65,10.244.8.66]
+  jobs:
+  - release: pdns
+    name: pdns
+    properties:
+      pdns_conf: ((public_pdns_conf))
+      named_conf: ((public_named_conf))
+      dnssec:
+        enabled: true
+        zones: ((dnssec_zones))

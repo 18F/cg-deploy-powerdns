@@ -1,0 +1,8 @@
+- type: replace
+  path: /stemcells/alias=default/name
+  value: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
+
+- type: replace
+  path: /instance_groups/name=pdns_private/networks/name=bosh/static_ips
+  value: (( grab terraform_outputs.staging_dns_private_ips ))
+

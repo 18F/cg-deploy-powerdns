@@ -1,0 +1,106 @@
+private_pdns_conf: |
+  local-ipv6=
+  launch=bind
+  bind-config=/var/vcap/jobs/pdns/etc/named.conf
+  bind-ignore-broken-records=yes
+  allow-recursion=0.0.0.0/0
+  allow-axfr-ips=10.244.8.0/24
+  daemon=yes
+  disable-axfr=no
+  guardian=yes
+  local-address=0.0.0.0
+  local-port=53
+  log-dns-details=on
+  loglevel=3
+  master=yes
+  slave=no
+  outgoing-axfr-expand-alias=yes
+private_named_conf: |
+  zone "example.com" IN {
+    type master;
+    file "/var/vcap/jobs/pdns/etc/pipe.conf";
+    allow-update { none; };
+  };
+private_pipe_conf: |
+  ; designates the start of this zone file in the namespace
+  $ORIGIN example.com.
+
+  ; default expiration time of all resource records without their own TTL value
+  $TTL 1h
+
+  ; @ means use $ORIGIN
+  @             IN  SOA   dns1.example.com. username.example.com. ( 2017110713 30m 1h 1w 1h )
+                          ; primary dns server
+                          ; contact email address, replace @ with .
+                          ; ( serial # for zone transfers: use YYYYMMDD + 2 digit increment
+                          ; refresh every
+                          ; retry
+                          ; expire
+                          ; min TTL )
+
+  @             IN  NS  dns1.example.com.
+  @             IN  NS  dns2.example.com.
+  dns1          IN  A  10.0.1.1
+  dns2          IN  A  10.0.1.2
+
+  ; alias record for apex
+  @             IN ALIAS dualstack.production-cloudfoundry-main-748290002.us-gov-west-1.elb.amazonaws.com.
+  www           IN  CNAME  example.com.
+
+  *.app.example.com IN ALIAS dualstack.production-cloudfoundry-apps-1021484088.us-gov-west-1.elb.amazonaws.com.
+public_pdns_conf: |
+  local-ipv6=
+  launch=bind
+  bind-config=/var/vcap/jobs/pdns/etc/named.conf
+  bind-ignore-broken-records=yes
+  bind-check-interval=60
+  bind-dnssec-db=/var/vcap/jobs/pdns/etc/dnssec.db
+  allow-recursion=0.0.0.0/0
+  daemon=yes
+  disable-axfr=yes
+  guardian=yes
+  local-address=0.0.0.0
+  local-port=53
+  log-dns-details=on
+  loglevel=3
+  master=no
+  slave=yes
+  slave-cycle-interval=60
+public_named_conf: |
+  zone "example.com" IN {
+    type slave;
+    file "/var/vcap/jobs/pdns/etc/example.com.zone";
+    masters {
+      10.244.8.64;
+    };
+  };
+dnssec_zones:
+  - zone: example.com
+    keys:
+      - type: zsk
+        active: active
+        key: |
+          Private-key-format: v1.2
+          Algorithm: 7 (RSA-NSEC3-SHA1)
+          Modulus: t1jD9SXliXo0MDMf6+HMgR940yME5va/LDVp7AVJrscjqCOxnjuObDKEdkCmAUSPJbwTnHCns8QI2G9G/5lwMNRwMSNGLDUF66XHF1YE2hYTBEq8UC2381RTYBKn2dsdSQXLyFQbHXDSiHDwFjMIfSKcZSdHVDBdT4DBznFQHGgdxC2hpU8izvuLv6E6iJg12kjdnCR8JO537TQo74C9TxuXwB7AKKPPX8D2DoMhpYDailjA3kdFXKiip8v/2aAGkNGlfhmxitorRtc4V8w237yHmoNlmR8rDlmLbp87fJR9Rgj22dX+9yWQgru+roxc5L5sJq/2xtMciw/LsjOP0w==
+          PublicExponent: AQAB
+          PrivateExponent: ZqZX7+SrwnCcz2+QK6xbpt9L8knk8LqtBb9R8kZznlr356c0RnbpokIWT26agpMz4diO0kNwYQEcQrDqeygY2/3UYm5xV0bIbcp+0N3kEYXSV9DP5cPy/VT06REI0LwQhVWtZhdQpwcHmERC5urjkcvS6/81vDjnxR89YqumQoBFVlgKV18/eFtRPGCqFLd3+1VwDGM4RpbNdb25+slROgVYJ5zzxbvwYS9EDAgAO+20TBA2j6wtqLKoXNu5Wk/2QWg2S8LKn8PNRpc4agFJTaL/SpJdxzpctB8SUHgBExwlX9NIW0rpmQ+uE8LBQB3+mNKH70Obl3bcVahJZINfwQ==
+          Prime1: 5MOi1MOmw4hpLCyGTECv2rpWIYjkMtAWOrsHB0+3Sxq7bje2epc3NLiDB//rP1Y+L6hld16g32Qik0zcd4B7MmSRpUV4h+VZ4uAa4DxsZk6Efj/4u8otf7SeiFO5reSLUttqPm8LeOuPQ0uIyB6hrftVlF9xANaMa/DfbgnV+us=
+          Prime2: zSzg3SDGRQt/v2KIM4n0fbYOLCs6rBzzj4VR41uc0jZzZ1B/+EzM7YEYGyIg6RBXn/VQnvtKizjLJxu5NU7H5CeSeJasAJN0o08Q99f+FfQ7/jUbAEGWzShc468SaxsVTWKpYUU7Z7zEGsovRbBvT509otMGu+yhiCHRQxVstLk=
+          Exponent1: QEleC+6DgbVm4NwOTYVsJcpxg/EFN+ZUKOMAIaTcPIXhoCKV7DNsdytW3zui72ScCyaGhRoZmU15je1uk0KO3GV4rHouWfow3VnfE57HU6TDBPuTOaqiSJ4IYwUsS9rK8FjqrWrlTXDdDKtAYASDqPHVZeHATtz8DyVclH69HEs=
+          Exponent2: BWtRCSYrdnlmR2TP2iSjq4pad3ow04j0Oe84iXvK+ZZsl+b9ak6E/yTwwQ62tdEzr0rodTqH7oNygjbuPmU1TGZrLPo10tISO5oEBbfTwzqvNviqHOielg6h3XWrU97kQiX/+Uy90/CdcWOzufB+EClEDn/qZp5KafESuOXg+Ck=
+          Coefficient: ubXHjhilO+/KMOKjrgNi78t31PP3l/w50HORfgpEiLWhb832Yu1Epywbnpw8auB+ldezKGp03wHp5uqcMwIz5Psm7jOoyEtRTVvx0td0VUgiP6uk9o0fgjRVR1VLeiXA7SY4w6gHwzHElVIhRKty9baH8HySAMuAFfs2m1PG1VA=
+      - type: ksk
+        active: active
+        key: |
+          Private-key-format: v1.2
+          Algorithm: 7 (RSA-NSEC3-SHA1)
+          Modulus: uVrh+yWke1djeoUAC/wx/vau6S7UZ8Y1TTiE3tjojxLk9YuZztUFg2Dy9Yhy3EMuf1+n5TDvXKkzNqN9LttIHQCfsnfDUad0VuHUoT3wjRAhgwfK/XH7fTH4S4ElTsQ4qnPO6J+MjecONqXwUHOlOrb0G0e6L6zyONQGAqccBdRQUMl/jny0YO1vkhAvqROOgD49qK2aTWMI8IMeCkIesgSKXC2Sc8+y9yMrle50bsTAMbymH3wOyKCaH5Y84orwcZx/QOzH8THgjnnAH5xjMBBlNRjUpYQiAQgKr2YSx2UCN47bp2WXzKT67oVmbHR5vahxF1332tMeunk5rHtEF1bGp2AxuZBuc5OHHXlPU92QZDBxT+w30gCFY1078btW3woXzOVKV01CN5Q0oxyvwpqLtvG6ZcTtXBIu8nCCZGyzf0zXeRrq+w1QtSr7fcikucd7Ok+Y+Elva/NE1lI3eJdUNLvbYjrLV16QM6Ixp5FxNq/GoSuuGPskxzAQt5wLT6/mE3Yij4cPvFuzZ2mw4L+q15wc6u/dlwxtbHOR5bTcPrXSx4Q/Wu/c2AhMDcMFaJCmNgKg2YawqYaFPPLmDYc2PXtaPO32ty0Om8H3d+RunYiZ19PKePR551e9gMoE3pZJnIGdyFMxPrMpWsouGhmj1AQPCRyT7ZBMisHBkWk=
+          PublicExponent: AQAB
+          PrivateExponent: nADhCBdTi7gucvUz5+J4VeZbqskOXtVVEUxLkKAxhBHcAMphRtLF1CCp/Hu+aKJmpS/mSKFaJLwH7anGd8R5umdHAdeI3dW5tlJWOuu95Yw5GGZbs9rWVzXSjAIDW3sNUnEsKV/31YstzFL3o07iNzu60qcZDn1aVPgmot7xV/qtKoGdSViuHJJagC39Xymlm0xHawvKPe3nnT5N70ZdPWlS5mg4xh5+u0Cvs35CIuSX+oSTsRYh/zwk3Ab/8ZAM9SJJfGSNl/Rp0qCoUjK2zMJP3FOszi4azJFvJNcdYRMjvY0QVKDOFaCZzl0aqpeRy03U+VzOei+Mwle7ce9Bi5Bw92S2NUxB3QFmcQG/ARM2+oj94m8p/a+lL+p/wAw9qwkzMJSmMxjUlay22/2cqadCeJJpwL7G1gKC7VTTPWGzRQ0lf9RVB8VqPnfOhgWF1LQYF8L+jZRyP6VSgjAK1uJnLKkHfgWbx2An7aN6W9V/pqPOdw/tMr1a4/0aBOAIzPjTCOucE9TpJ6khZAnXmYa4qhjz+7KgwrWm5RwGBUcTR/XhRuXkoazYcO8N25JpSWImhmFXZPobBfH1yycAE38VIGUN1xO0h1Yxih4DrPFBZWsq9/oiJFq7wXlCGqvGhHFsV0Lv/KwAS6cZYLZroCbA0ur2+xzd9XLW33U1BoE=
+          Prime1: 3cvv22prm5CFhL80BC3pnE4m2Kc8KB5cKam/9kwH9dMNycdGBxLne4UzTdCDxUA1WOXGXRBVP2U3WiHtygpgBaLtEN70yQ+FppReNSfQSzG00j7D5F4z2kXGPUvMGUjugRXxnCmHv9JlYAnHbmNWPD2uaOFtFMZZ2qxz/CBqIjzuEtT8zYn/VFC+cs0jDtDbQcnHVflcvA/jtKlhuE4DdtaTtjhWCDTiHe1jXcjgO3e+5TTilNUSOC2K9dTgzKCOq3w9pGXYIKQ2OVlTnj6Do9CHG5yuvnGrJO4wDViRtuMr5MABgmBGM7rb/jugn1Q0lV2rPC84+ljo5D9GeK8iEQ==
+          Prime2: 1fBOvfa2rnESLtzqcfqpl2SozcKgUCXuhQRTD5x6IRXv+LI9/miPRtcTBLinFUTPdmYQkDKy2OXPyhFozpWGR7vtb2WEvi1dYHOYXhEP4uoRYfI/OLWcVbrnqJsLoXfr+fgcexd+cRG3Do3b1DLdxiZyxvBdsgPkVjrcZ2nUqF9DbLvoC3O17j9p8dL6SnAZU496Xzgbpt5vVZ+Yo5cVeHl8tjPnOqsMNyc4S+6MJZ3vflJyLU7+5VNd2NiChMcXlBs+Iv5rATPgcJn6AhplEbxlS2F1kGa2DamAdKKYo5ALYsAvxGFc4e42Op7uVtj01dZdhgWSqHTO4LCkcdGh2Q==
+          Exponent1: v+nNglqj/7hef41+MbuUbuYEoOSbnc8fSgGSk0gYfzF+tcCSrF5EI9IOoV8yFYRIZMJ1EGOoj7FB4uCGw5KUoWvnmviAcFTY/VlV5sKrbdT1tBIRKFIGpfBH5xPl517+2H0nUUtyJZ2kkCQGB1M28+sfNasQ2rACYb9koJ1fmH6GNY9Lq4Gjh85R7D3p/tDjVxqEO7UH88X/7nu9jV8bikGDEGHQt0si+GhG2YiN1Yb4i5VmFQgEus1Vdv8bAJRQvrtDDzP8fcn5DUhonP1UpHMz5MV/QlRSlSLwOywO8WPBwC4PYENzmyEtZ98qTZLr6O5i0zG9KIm0AoNps9U+MQ==
+          Exponent2: uyNUzah0zgyMWj/WOFOKa6qaWjpIHzO++833li1LS4uz+Ph5cAQoaFAUC8o2JU2mqCvJi0k91qrX4yrtYd+7sR37KLlFr1FhX9Bd1NLZ8aTMBcBwevupv/gZUgwl1V1gJq1YxHedm+xiEzIVu/2urvjM56Y0X1Y2MxOT3kXdxlZmVUPdS78wwjHoS6dAV0LNdKGJ6qba0VG7U8uiKl8rYdHrPDoUpuYeblQ5U3pcTz9i0j3uMCHsp88PxXJGYT0CLATUiqnAEjI9vmGCJrrN9AC3HoQm4WRnFXZSrjPYjyKeQwhYAFEmfV7xQr/pPkDTkgXMk0JmskJTAIqjnghAqQ==
+          Coefficient: Xw+7CboYqLYJtsoFUwycrtSXHXg/upDOCG+n1GHtbTF3SvPaEMAGIXvFV10+nC0qyMn6Zosw12k0k/oUCnTQqV15uj6Hiz1Jz234VS490dYM4J9QXK8QinHV026XID+Yb4n/hQZLd0z5DCZTQmGuS066Sr6zj+YSWfiTlFlNuJgQKqQf+0tQyCYv/IU5MMn7rjUt44Lcy32bNEZVRJJruFnEhXAJjlIqQd/chS7nLogXU7YT68qgh1UgQN6HjzbjXSt1Wak1zooKMqLYHpl4yfju4Z1PVDY8kaVVUlDkxkcS0x+x9YSMNokIzH5ZCXA0vZxGe5GWQBrcZbdRY787og==
+
