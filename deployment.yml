@@ -21,7 +21,7 @@ instance_groups:
   stemcell: default
   vm_type: default
   instances: 1
-  azs: [z1,z2]
+  azs: [z1, z2]
   networks:
   - name: manual
     static_ips: [10.244.8.64]
@@ -29,7 +29,23 @@ instance_groups:
   - release: pdns
     name: pdns
     properties:
-      pdns_conf: ((private_pdns_conf))
+      pdns_conf: |
+        local-ipv6=
+        launch=bind
+        bind-config=/var/vcap/jobs/pdns/etc/named.conf
+        bind-ignore-broken-records=yes
+        allow-recursion=0.0.0.0/0
+        allow-axfr-ips=((zone-transfer-ips))
+        daemon=yes
+        disable-axfr=no
+        guardian=yes
+        local-address=0.0.0.0
+        local-port=53
+        log-dns-details=on
+        loglevel=3
+        master=yes
+        slave=no
+        outgoing-axfr-expand-alias=yes
       named_conf: ((private_named_conf))
       pipe_conf: ((private_pipe_conf))
       dnssec:
@@ -39,16 +55,34 @@ instance_groups:
   instances: 2
   stemcell: default
   vm_type: default
-  azs: [z1,z2]
+  azs: [z1, z2]
   networks:
   - name: manual
-    static_ips: [10.244.8.65,10.244.8.66]
+    static_ips: [10.244.8.65, 10.244.8.66]
   jobs:
   - release: pdns
     name: pdns
     properties:
-      pdns_conf: ((public_pdns_conf))
-      named_conf: ((public_named_conf))
+      pdns_conf: |
+        local-ipv6=
+        launch=bind
+        bind-config=/var/vcap/jobs/pdns/etc/named.conf
+        bind-ignore-broken-records=yes
+        bind-check-interval=60
+        bind-dnssec-db=/var/vcap/jobs/pdns/etc/dnssec.db
+        allow-recursion=0.0.0.0/0
+        daemon=yes
+        disable-axfr=yes
+        guardian=yes
+        local-address=0.0.0.0
+        local-port=53
+        log-dns-details=on
+        loglevel=3
+        master=no
+        slave=yes
+        slave-cycle-interval=60
+      named_conf: |
+        ...
       dnssec:
         enabled: true
         zones: ((dnssec_zones))

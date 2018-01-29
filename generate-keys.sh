@@ -24,5 +24,3 @@ mv "$ZSK_NAME.private" "$DOMAIN.zsk.private"
 KSK_NAME=$($KSK_KEYGEN_CMD -a NSEC3RSASHA1 -b 4096 -n ZONE "$DOMAIN")
 mv "$KSK_NAME.key" "$DOMAIN.ksk.public"
 mv "$KSK_NAME.private" "$DOMAIN.ksk.private"
-
-
