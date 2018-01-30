@@ -10,7 +10,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-func getARecords(name, addr string) (zskID uint16, addrs []net.IP, err error) {
+func getARecords(name, addr string) (rrset []dns.RR, rrsig *dns.RRSIG, zskID uint16, addrs []net.IP, err error) {
 	client := new(dns.Client)
 
 	msg := new(dns.Msg)
@@ -27,8 +27,10 @@ func getARecords(name, addr string) (zskID uint16, addrs []net.IP, err error) {
 		switch rr.(type) {
 		case *dns.A:
 			addrs = append(addrs, rr.(*dns.A).A)
+			rrset = append(rrset, rr.(*dns.A))
 		case *dns.RRSIG:
-			zskID = rr.(*dns.RRSIG).KeyTag
+			rrsig = rr.(*dns.RRSIG)
+			zskID = rrsig.KeyTag
 		default:
 		}
 	}
@@ -36,7 +38,7 @@ func getARecords(name, addr string) (zskID uint16, addrs []net.IP, err error) {
 	return
 }
 
-func getDNSKEYRecords(name, addr string) (kskID uint16, dnskeyIDs map[uint16]bool, err error) {
+func getDNSKEYRecords(name, addr string) (kskID uint16, dnskeyIDs map[uint16]*dns.DNSKEY, err error) {
 	client := new(dns.Client)
 
 	msg := new(dns.Msg)
@@ -49,11 +51,12 @@ func getDNSKEYRecords(name, addr string) (kskID uint16, dnskeyIDs map[uint16]boo
 		return
 	}
 
-	dnskeyIDs = map[uint16]bool{}
+	dnskeyIDs = map[uint16]*dns.DNSKEY{}
 	for _, rr := range r.Answer {
 		switch rr.(type) {
 		case *dns.DNSKEY:
-			dnskeyIDs[rr.(*dns.DNSKEY).KeyTag()] = true
+			dnskey := rr.(*dns.DNSKEY)
+			dnskeyIDs[dnskey.KeyTag()] = dnskey
 		case *dns.RRSIG:
 			kskID = rr.(*dns.RRSIG).KeyTag
 		default:
@@ -71,7 +74,7 @@ func main() {
 
 	for idx, server := range servers {
 		target := fmt.Sprintf("%s:53", server)
-		zskID, _, err := getARecords(domain, target)
+		rr, rrsig, zskID, _, err := getARecords(domain, target)
 		if err != nil {
 			log.Fatalf("error: %s", err)
 		}
@@ -89,6 +92,10 @@ func main() {
 		_, ok = dnskeyIDs[kskID]
 		if !ok {
 			log.Fatalf("could not find kskID %s in dnskey records", kskID)
+		}
+
+		if err := rrsig.Verify(dnskeyIDs[zskID], rr); err != nil {
+			log.Fatalf("failed to verify rrsig of a record rrset: %s", err)
 		}
 
 		if idx == 0 {
