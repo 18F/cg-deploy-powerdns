@@ -10,6 +10,30 @@ import (
 	"github.com/miekg/dns"
 )
 
+func getDSRecords(name, addr string) (dskeys []*dns.DS, err error) {
+	client := new(dns.Client)
+
+	msg := new(dns.Msg)
+	msg.SetQuestion(name, dns.TypeDS)
+	msg.SetEdns0(4096, true)
+
+	var r *dns.Msg
+	r, _, err = client.Exchange(msg, addr)
+	if err != nil {
+		return
+	}
+
+	for _, rr := range r.Answer {
+		switch rr.(type) {
+		case *dns.DS:
+			dskeys = append(dskeys, rr.(*dns.DS))
+		default:
+		}
+	}
+
+	return
+}
+
 func getARecords(name, addr string) (rrset []dns.RR, rrsig *dns.RRSIG, zskID uint16, addrs []net.IP, err error) {
 	client := new(dns.Client)
 
@@ -96,6 +120,22 @@ func main() {
 
 		if err := rrsig.Verify(dnskeyIDs[zskID], rr); err != nil {
 			log.Fatalf("failed to verify rrsig of a record rrset: %s", err)
+		}
+
+		dsKey, err := getDSRecords(domain, target)
+		if err != nil {
+			log.Fatalf("failed to get ds:", err)
+		}
+
+		digestMatch := false
+		for _, k := range dsKey {
+			if k.Digest != dnskeyIDs[kskID].ToDS(dns.SHA256).Digest {
+				digestMatch = true
+			}
+		}
+
+		if !digestMatch {
+			log.Fatal("KSK does not match")
 		}
 
 		if idx == 0 {
