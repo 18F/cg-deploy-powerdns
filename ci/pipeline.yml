@@ -121,6 +121,7 @@ jobs:
     file: pdns-config/ci/verify-dnssec-rrsig.yml
     params:
       ZONES: example.com
+      ENVIRONMENT: staging
   on_success:
     put: slack
     params:
@@ -172,15 +173,11 @@ jobs:
       - terraform-yaml/state.yml
       - terraform-secrets/terraform.yml
       - common/secrets.yml
-  - task: smoke-test-rrsigs
-    file: pdns-config/ci/verify-dnssec-rrsig.yml
-    params:
-      ZONES: example.com
-      ENVIRONMENT: production
   - task: smoke-test-ds
     file: pdns-config/ci/verify-dnssec-ds.yml
     params:
       ZONES: example.com
+      ENVIRONMENT: production
   on_success:
     put: slack
     params:

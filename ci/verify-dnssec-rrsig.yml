@@ -10,9 +10,5 @@ inputs:
 - name: pdns-config
 - name: terraform-yaml
 
-params:
-  ZONES: cloud.gov
-  ENVIRONMENT: staging
-
 run:
   path: pdns-config/ci/verify-rrsig.sh

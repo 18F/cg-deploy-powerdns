@@ -10,9 +10,5 @@ inputs:
 - name: pdns-config
 - name: terraform-secrets
 
-params:
-  ZONES: cloud.gov
-  ENVIRONMENT: production
-
 run:
-  path: pdns-config/ci/terraform-secrets.sh
+  path: pdns-config/ci/verify-ds.sh
