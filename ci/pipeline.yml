@@ -117,6 +117,8 @@ jobs:
       - terraform-yaml/state.yml
       - terraform-secrets/terraform.yml
       - common/secrets.yml
+  - task: smoke-test-rrsigs
+    file: pdns-config/ci/verify-dnssec-rrsig.yml
   on_success:
     put: slack
     params:
