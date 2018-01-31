@@ -1,5 +1,6 @@
 #!/bin/bash
 set -eu
+DNS_SERVERS=$(spruce json terraform-yaml/state.yml  | jq -r '.terraform_outputs.staging_dns_public_ips[]')
 
 for DNS_SERVER in "${DNS_SERVERS}"; do
   dig . DNSKEY @{$DNS_SERVER}| grep -Ev '^($|;)' > root.keys
