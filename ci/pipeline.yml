@@ -1,0 +1,198 @@
+---
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+
+- name: bosh-deployment
+  type: docker-image
+  source:
+    repository: cloudfoundry/bosh-deployment-resource
+
+- name: cg-common
+  type: docker-image
+  source:
+    repository: 18fgsa/cg-common-resource
+
+- name: s3-iam
+  type: docker-image
+  source:
+    repository: 18fgsa/s3-resource
+
+resources:
+- name: pdns-config
+  type: git
+  source:
+    uri: ((pdns-config-uri))
+    branch: ((pdns-config-branch))
+
+- name: pdns-release
+  type: s3-iam
+  source:
+    bucket: ((s3-bosh-releases-bucket))
+    private: true
+    regexp: pdns-(.*).tgz
+    region_name: ((aws-region))
+
+- name: stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
+
+- name: terraform-yaml
+  type: s3-iam
+  source:
+    bucket: ((tf-state-bucket))
+    versioned_file: ((tf-state-file))
+    region_name: ((aws-region))
+
+- name: common-staging
+  type: cg-common
+  source:
+    bucket_name: ((private-staging-bucket))
+    secrets_file: pdns.yml
+    secrets_passphrase: ((private-staging-passphrase))
+    bosh_cert: bosh.pem
+    region: ((aws-region))
+
+- name: common-production
+  type: cg-common
+  source:
+    bucket_name: ((private-production-bucket))
+    secrets_file: pdns.yml
+    secrets_passphrase: ((private-production-passphrase))
+    bosh_cert: bosh.pem
+    region: ((aws-region))
+
+- name: pdns-deployment-staging
+  type: bosh-deployment
+  source:
+    target: ((staging-bosh-target))
+    client: ((staging-bosh-client))
+    client_secret: ((staging-bosh-client-secret))
+    ca_cert: ((bosh-ca-cert))
+    deployment: pdns-staging
+
+- name: pdns-deployment-production
+  type: bosh-deployment
+  source:
+    target: ((production-bosh-target))
+    client: ((production-bosh-client))
+    client_secret: ((production-bosh-client-secret))
+    ca_cert: ((bosh-ca-cert))
+    deployment: pdns-production
+
+- name: slack
+  type: slack-notification
+  source:
+    url: ((slack-webhook-url))
+
+jobs:
+- name: deploy-pdns-staging
+  plan:
+  - aggregate:
+    - get: pdns-config
+      trigger: true
+    - get: pdns-release
+      trigger: true
+    - get: stemcell
+      trigger: true
+    - get: terraform-yaml
+    - get: common
+      resource: common-staging
+      trigger: true
+  - task: terraform-secrets
+    file: pdns-config/ci/terraform-secrets.yml
+  - put: pdns-deployment-staging
+    params:
+      manifest: pdns-config/deployment.yml
+      stemcells:
+      - stemcell/*.tgz
+      releases:
+      - pdns-release/*.tgz
+      ops_files:
+      - pdns-config/opsfiles/staging.yml
+      vars_files:
+      - terraform-yaml/state.yml
+      - terraform-secrets/terraform.yml
+      - common/secrets.yml
+  - task: smoke-test-rrsigs
+    file: pdns-config/ci/verify-dnssec-rrsig.yml
+    params:
+      ZONES: example.com
+      ENVIRONMENT: staging
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Successfully deployed pdns on staging
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: FAILED to deploy dns on staging
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+
+- name: deploy-pdns-production
+  plan:
+  - aggregate:
+    - get: pdns-config
+      passed: [deploy-pdns-staging]
+      trigger: true
+    - get: pdns-release
+      passed: [deploy-pdns-staging]
+      trigger: true
+    - get: stemcell
+      passed: [deploy-pdns-staging]
+      trigger: true
+    - get: terraform-yaml
+      passed: [deploy-pdns-staging]
+    - get: common
+      resource: common-production
+      trigger: true
+  - task: terraform-secrets
+    file: pdns-config/ci/terraform-secrets.yml
+  - put: pdns-deployment-production
+    params:
+      manifest: pdns-config/deployment.yml
+      stemcells:
+      - stemcell/*.tgz
+      releases:
+      - pdns-release/*.tgz
+      ops_files:
+      - pdns-config/opsfiles/production.yml
+      vars_files:
+      - terraform-yaml/state.yml
+      - terraform-secrets/terraform.yml
+      - common/secrets.yml
+  - task: smoke-test-ds
+    file: pdns-config/ci/verify-dnssec-ds.yml
+    params:
+      ZONES: example.com
+      ENVIRONMENT: production
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Successfully deployed pdns on prodution
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: FAILED to deploy dns on production
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
