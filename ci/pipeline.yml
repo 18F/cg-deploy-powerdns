@@ -176,6 +176,7 @@ jobs:
     file: pdns-config/ci/verify-dnssec-rrsig.yml
     params:
       ZONES: example.com
+      ENVIRONMENT: production
   - task: smoke-test-ds
     file: pdns-config/ci/verify-dnssec-ds.yml
     params:
@@ -184,7 +185,7 @@ jobs:
     put: slack
     params:
       text: |
-        :white_check_mark: Successfully deployed pdns on evelopment
+        :white_check_mark: Successfully deployed pdns on prodution
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: ((slack-channel))
       username: ((slack-username))
