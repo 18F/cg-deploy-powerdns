@@ -12,6 +12,7 @@ inputs:
 
 params:
   ZONES: cloud.gov
+  ENVIRONMENT: staging
 
 run:
   path: pdns-config/ci/verify-rrsig.sh
