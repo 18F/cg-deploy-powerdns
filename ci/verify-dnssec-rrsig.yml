@@ -8,7 +8,7 @@ image_resource:
 
 inputs:
 - name: pdns-config
-- name: terraform-secrets
+- name: terraform-yaml
 
 params:
   ZONES: cloud.gov
