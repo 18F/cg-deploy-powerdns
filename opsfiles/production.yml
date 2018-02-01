@@ -12,7 +12,7 @@
 
 - type: replace
   path: /instance_groups/name=pdns_public/instances
-  value: 2
+  value: 4
 
 - type: replace
   path: /instance_groups/name=pdns_private/vm_type
