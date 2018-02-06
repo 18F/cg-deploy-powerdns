@@ -60,7 +60,7 @@ resources:
   type: cg-common
   source:
     bucket_name: ((private-production-bucket))
-    secrets_file: pdns.yml
+    secrets_file: production-pdns.yml
     secrets_passphrase: ((private-production-passphrase))
     bosh_cert: bosh.pem
     region: ((aws-region))
@@ -141,7 +141,7 @@ jobs:
       username: ((slack-username))
       icon_url: ((slack-icon-url))
 
-- name: deploy-pdns-production
+- name: plan-pdns-production
   plan:
   - aggregate:
     - get: pdns-config
@@ -155,6 +155,59 @@ jobs:
       trigger: true
     - get: terraform-yaml
       passed: [deploy-pdns-staging]
+    - get: common
+      resource: common-production
+      trigger: true
+  - task: terraform-secrets
+    file: pdns-config/ci/terraform-secrets.yml
+  - put: pdns-deployment-production
+    params:
+      manifest: pdns-config/deployment.yml
+      dry_run: true
+      no_redact: true
+      stemcells:
+      - stemcell/*.tgz
+      releases:
+      - pdns-release/*.tgz
+      ops_files:
+      - pdns-config/opsfiles/production.yml
+      vars_files:
+      - terraform-yaml/state.yml
+      - terraform-secrets/terraform.yml
+      - common/secrets.yml
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: PowerDNS production plan is ready for review
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: FAILED to plan production PowerDNS
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+
+- name: deploy-pdns-production
+  plan:
+  - aggregate:
+    - get: pdns-config
+      passed: [plan-pdns-production]
+      trigger: true
+    - get: pdns-release
+      passed: [plan-pdns-production]
+      trigger: true
+    - get: stemcell
+      passed: [plan-pdns-production]
+      trigger: true
+    - get: terraform-yaml
+      passed: [plan-pdns-production]
     - get: common
       resource: common-production
       trigger: true
