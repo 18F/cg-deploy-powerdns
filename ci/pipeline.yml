@@ -116,11 +116,12 @@ jobs:
       vars_files:
       - terraform-yaml/state.yml
       - terraform-secrets/terraform.yml
+      - terraform-secrets/ns.yml
       - common/secrets.yml
   - task: smoke-test-rrsigs
     file: pdns-config/ci/verify-dnssec-rrsig.yml
     params:
-      ZONES: example.com
+      ZONES: sandbox.gov
       ENVIRONMENT: staging
   on_success:
     put: slack
@@ -174,6 +175,7 @@ jobs:
       vars_files:
       - terraform-yaml/state.yml
       - terraform-secrets/terraform.yml
+      - terraform-secrets/ns.yml
       - common/secrets.yml
   on_success:
     put: slack
@@ -225,11 +227,12 @@ jobs:
       vars_files:
       - terraform-yaml/state.yml
       - terraform-secrets/terraform.yml
+      - terraform-secrets/ns.yml
       - common/secrets.yml
   - task: smoke-test-ds
     file: pdns-config/ci/verify-dnssec-ds.yml
     params:
-      ZONES: example.com
+      ZONES: sandbox.gov
       ENVIRONMENT: production
   on_success:
     put: slack

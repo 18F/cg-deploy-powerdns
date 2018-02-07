@@ -43,7 +43,7 @@
 - type: replace
   path: /instance_groups/name=pdns_private/jobs/name=pdns/properties/named_conf
   value: |
-    zone "example.com" IN {
+    zone "sandbox.gov" IN {
       type master;
       file "/var/vcap/jobs/pdns/etc/pipe.conf";
       allow-update { none; };
@@ -53,13 +53,13 @@
   path: /instance_groups/name=pdns_private/jobs/name=pdns/properties/pipe_conf
   value: |
     ; designates the start of this zone file in the namespace
-    $ORIGIN example.com.
+    $ORIGIN sandbox.gov.
 
     ; default expiration time of all resource records without their own TTL value
     $TTL 1h
 
     ; @ means use $ORIGIN
-    @             IN  SOA   dns1.example.com. username.example.com. ( 2017110713 30m 1h 1w 1h )
+    @             IN  SOA   ns1.sandbox.gov. cloud-gov-operations.gsa.gov. ( 2018020601 30m 1h 1w 1h )
                             ; primary dns server
                             ; contact email address, replace @ with .
                             ; ( serial # for zone transfers: use YYYYMMDD + 2 digit increment
@@ -68,23 +68,22 @@
                             ; expire
                             ; min TTL )
 
-    @             IN  NS  dns1.example.com.
-    @             IN  NS  dns2.example.com.
-    dns1          IN  A  10.0.1.1
-    dns2          IN  A  10.0.1.2
+    @             IN  NS  ns1.sandbox.gov.
+    @             IN  NS  ns2.sandbox.gov.
 
     ; alias record for apex
     @             IN ALIAS dualstack.production-cloudfoundry-main-748290002.us-gov-west-1.elb.amazonaws.com.
-    www           IN  CNAME  example.com.
+    www           IN  CNAME  sandbox.gov.
 
-    *.app.example.com IN ALIAS dualstack.production-cloudfoundry-apps-1021484088.us-gov-west-1.elb.amazonaws.com.
+    *.app.sandbox.gov IN ALIAS dualstack.production-cloudfoundry-apps-1021484088.us-gov-west-1.elb.amazonaws.com.
+    ((nameservers))
 
 - type: replace
   path: /instance_groups/name=pdns_public/jobs/name=pdns/properties/named_conf
   value: |
-    zone "example.com" IN {
+    zone "sandbox.gov" IN {
       type slave;
-      file "/var/vcap/jobs/pdns/etc/example.com.zone";
+      file "/var/vcap/jobs/pdns/etc/sandbox.gov.zone";
       masters {
         ((master-ips));
       };
