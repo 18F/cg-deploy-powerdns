@@ -51,7 +51,7 @@ resources:
   type: cg-common
   source:
     bucket_name: ((private-staging-bucket))
-    secrets_file: pdns.yml
+    secrets_file: staging-pdns.yml
     secrets_passphrase: ((private-staging-passphrase))
     bosh_cert: bosh.pem
     region: ((aws-region))
@@ -205,18 +205,15 @@ jobs:
   - aggregate:
     - get: pdns-config
       passed: [plan-pdns-production]
-      trigger: true
     - get: pdns-release
       passed: [plan-pdns-production]
-      trigger: true
     - get: stemcell
       passed: [plan-pdns-production]
-      trigger: true
     - get: terraform-yaml
       passed: [plan-pdns-production]
     - get: common
       resource: common-production
-      trigger: true
+      passed: [plan-pdns-production]
   - task: terraform-secrets
     file: pdns-config/ci/terraform-secrets.yml
     params:
