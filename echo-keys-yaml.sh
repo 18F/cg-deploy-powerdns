@@ -8,6 +8,7 @@ ZSK_FILE="$DOMAIN.zsk.private"
 KSK_FILE="$DOMAIN.ksk.private"
 
 IFS=$'\n'
+echo "- zone: $DOMAIN"
 echo "  - type: zsk"
 echo "    active: active"
 echo "    key: |"
