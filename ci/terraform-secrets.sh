@@ -9,7 +9,7 @@ spruce merge --prune terraform_outputs \
 
 count=0
 echo "nameservers: |" > terraform-secrets/ns.yml
-for nameserver in $(bosh interpolate terraform-secrets/terraform.yml --path /master-ips | tr ";" "\n")
+for nameserver in $(spruce json terraform-yaml/state.yml | jq -r ".terraform_outputs.${ENVIRONMENT}_dns_public_ips[]")
 do
   count=$((count+1))
   echo "    ns${count} IN A ${nameserver}" >> terraform-secrets/ns.yml
