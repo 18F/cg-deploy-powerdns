@@ -104,6 +104,8 @@ jobs:
       trigger: true
   - task: terraform-secrets
     file: pdns-config/ci/terraform-secrets.yml
+    params:
+      ENVIRONMENT: staging
   - put: pdns-deployment-staging
     params:
       manifest: pdns-config/deployment.yml
@@ -161,6 +163,8 @@ jobs:
       trigger: true
   - task: terraform-secrets
     file: pdns-config/ci/terraform-secrets.yml
+    params:
+      ENVIRONMENT: production
   - put: pdns-deployment-production
     params:
       manifest: pdns-config/deployment.yml
@@ -215,6 +219,8 @@ jobs:
       trigger: true
   - task: terraform-secrets
     file: pdns-config/ci/terraform-secrets.yml
+    params:
+      ENVIRONMENT: production
   - put: pdns-deployment-production
     params:
       manifest: pdns-config/deployment.yml
