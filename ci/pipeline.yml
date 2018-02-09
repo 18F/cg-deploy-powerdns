@@ -158,6 +158,7 @@ jobs:
       trigger: true
     - get: terraform-yaml
       passed: [deploy-pdns-staging]
+      trigger: true
     - get: common
       resource: common-production
       trigger: true
