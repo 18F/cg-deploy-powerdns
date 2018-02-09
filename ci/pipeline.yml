@@ -88,6 +88,11 @@ resources:
   source:
     url: ((slack-webhook-url))
 
+- name: tests-timer
+  type: time
+  source:
+    interval: 10m
+
 jobs:
 - name: deploy-pdns-staging
   plan:
@@ -232,16 +237,6 @@ jobs:
       - terraform-secrets/terraform.yml
       - terraform-secrets/ns.yml
       - common/secrets.yml
-  - task: smoke-test-rrsigs
-    file: pdns-config/ci/verify-dnssec-rrsig.yml
-    params:
-      ZONES: sandbox.gov
-      ENVIRONMENT: production
-  - task: smoke-test-ds
-    file: pdns-config/ci/verify-dnssec-ds.yml
-    params:
-      ZONES: sandbox.gov
-      ENVIRONMENT: production
   on_success:
     put: slack
     params:
@@ -256,6 +251,46 @@ jobs:
     params:
       text: |
         :x: FAILED to deploy dns on production
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+
+- name: smoke-tests-production
+  plan:
+  - aggregate:
+    - get: pdns-config
+      passed: [deploy-pdns-production]
+      trigger: true
+    - get: terraform-yaml
+      passed: [deploy-pdns-production]
+      trigger: true
+    - get: tests-timer
+      trigger: true
+  - task: smoke-test-rrsigs
+    file: pdns-config/ci/verify-dnssec-rrsig.yml
+    params:
+      ZONES: sandbox.gov
+      ENVIRONMENT: production
+  - task: smoke-test-ds
+    file: pdns-config/ci/verify-dnssec-ds.yml
+    params:
+      ZONES: sandbox.gov
+      ENVIRONMENT: production
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Smoke Tests for PowerDNS on prod PASSED
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-news-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: Smoke Tests for PowerDNS on prod FAILED
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: ((slack-channel))
       username: ((slack-username))
