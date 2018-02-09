@@ -232,6 +232,11 @@ jobs:
       - terraform-secrets/terraform.yml
       - terraform-secrets/ns.yml
       - common/secrets.yml
+  - task: smoke-test-rrsigs
+    file: pdns-config/ci/verify-dnssec-rrsig.yml
+    params:
+      ZONES: sandbox.gov
+      ENVIRONMENT: production
   - task: smoke-test-ds
     file: pdns-config/ci/verify-dnssec-ds.yml
     params:
