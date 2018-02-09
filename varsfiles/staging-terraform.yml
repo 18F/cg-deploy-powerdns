@@ -1,0 +1,2 @@
+zone-transfer-ips: (( concat terraform_outputs.public_subnet_az1_cidr ", " terraform_outputs.public_subnet_az2_cidr ))
+master-ips: (( join "; " terraform_outputs.staging_dns_private_ips ))

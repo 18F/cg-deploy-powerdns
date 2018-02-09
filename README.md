@@ -19,7 +19,7 @@ The private servers are only able to be accessed by the secondary servers, and a
 ### Deployment
 The pipeline under `ci/pipeline.yml` deploys to staging, generates a non-redacted diff against production configuration, and will manually allow a production push.  It will run smoke tests against production every 10 minutes, and send the notifications to Slack.
 
-To customize this release for a deployment, [BOSH Operations Files](https://bosh.io/docs/cli-ops-files.html) are used to change the YAML to match the deployment.  These files replace variables given via [Bosh Variables](https://bosh.io/docs/cli-int.html).  To change the example record to the record of your choice:
+To customize this release for a deployment, [BOSH Operations Files](https://bosh.io/docs/cli-ops-files.html) are used to change the YAML to match the deployment.  These files replace variables given via [Bosh Variables](https://bosh.io/docs/cli-int.html) and `terraform-secrets.sh`.  To change the example record to the record of your choice:
 
 * Generate DNSSEC keys using `generate-keys.sh DOMAIN`
 * BOSH Lite Steps
@@ -30,7 +30,7 @@ To customize this release for a deployment, [BOSH Operations Files](https://bosh
     * Replace `dnssec_zones` with the output of `echo-keys-yaml.sh DOMAIN`
     * Deploy to bosh lite: `bosh -e vbox -d pdns deploy ./deployment.yml -l ./varsfiles/bosh-lite.yml -o ./opsfiles/staging.yml`
 * Staging / Production Steps
-  * Edit `varsfiles/staging.yml` or `varsfiles/production.yml`
+  * Edit `opsfiles/staging.yml` or `opsfiles/production.yml`
     * Replace `private_named_conf` with your domain name
     * Replace `private_pipe_conf` with your domain records
     * Replace `public_named_conf` with your domain name
