@@ -1,8 +1,4 @@
 - type: replace
-  path: /name
-  value: pdns-staging
-
-- type: replace
   path: /stemcells/alias=default/name
   value: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
 

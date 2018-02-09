@@ -121,6 +121,7 @@ jobs:
       ops_files:
       - pdns-config/opsfiles/staging.yml
       vars_files:
+      - pdns-config/varsfiles/staging.yml
       - terraform-yaml/state.yml
       - terraform-secrets/terraform.yml
       - terraform-secrets/ns.yml
@@ -183,6 +184,7 @@ jobs:
       ops_files:
       - pdns-config/opsfiles/production.yml
       vars_files:
+      - pdns-config/varsfiles/production.yml
       - terraform-yaml/state.yml
       - terraform-secrets/terraform.yml
       - terraform-secrets/ns.yml
