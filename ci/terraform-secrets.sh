@@ -11,7 +11,7 @@ do
 done
 
 spruce merge --prune terraform_outputs \
-  pdns-config/varsfiles/${ENVIRONMENT}.yml \
+  pdns-config/varsfiles/${ENVIRONMENT}-terraform.yml \
   terraform-yaml/state.yml \
   terraform-secrets/ns.yml \
   >> terraform-secrets/terraform.yml
