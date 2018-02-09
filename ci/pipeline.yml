@@ -122,7 +122,6 @@ jobs:
       - pdns-config/opsfiles/staging.yml
       vars_files:
       - terraform-yaml/state.yml
-      - terraform-secrets/ns.yml
       - terraform-secrets/terraform.yml
       - common/secrets.yml
   - task: smoke-test-rrsigs
@@ -185,7 +184,6 @@ jobs:
       vars_files:
       - terraform-yaml/state.yml
       - terraform-secrets/terraform.yml
-      - terraform-secrets/ns.yml
       - common/secrets.yml
   on_success:
     put: slack
@@ -235,7 +233,6 @@ jobs:
       - pdns-config/opsfiles/production.yml
       vars_files:
       - terraform-yaml/state.yml
-      - terraform-secrets/ns.yml
       - terraform-secrets/terraform.yml
       - common/secrets.yml
   on_success:
