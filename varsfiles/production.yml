@@ -1,5 +1,5 @@
 zone-transfer-ips: (( concat terraform_outputs.public_subnet_az1_cidr ", " terraform_outputs.public_subnet_az2_cidr ))
-master-ips: (( join "; " terraform_outputs.ENVIRONMENT_dns_private_ips ))
+master-ips: (( join "; " terraform_outputs.production_dns_private_ips ))
 private_named_conf: |
     zone "sandbox.gov" IN {
       type master;

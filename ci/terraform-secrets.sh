@@ -2,8 +2,6 @@
 
 set -eux
 
-sed -i "s/ENVIRONMENT/${ENVIRONMENT}/g" pdns-config/varsfiles/terraform.yml
-
 spruce merge --prune terraform_outputs \
   pdns-config/varsfiles/${ENVIRONMENT}.yml \
   terraform-yaml/state.yml \
