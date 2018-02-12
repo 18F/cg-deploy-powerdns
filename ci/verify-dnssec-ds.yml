@@ -8,7 +8,6 @@ image_resource:
 
 inputs:
 - name: pdns-config
-- name: terraform-yaml
 
 run:
   path: pdns-config/ci/verify-ds.sh

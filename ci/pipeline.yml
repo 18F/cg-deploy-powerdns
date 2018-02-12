@@ -274,7 +274,6 @@ jobs:
     file: pdns-config/ci/verify-dnssec-ds.yml
     params:
       ZONES: sandbox.gov
-      ENVIRONMENT: production
   on_success:
     put: slack
     params:
