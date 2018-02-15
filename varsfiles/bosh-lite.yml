@@ -1,46 +1,7 @@
-private_named_conf: |
-  zone "sandbox.gov" IN {
-    type master;
-    file "/var/vcap/jobs/pdns/etc/pipe.conf";
-    allow-update { none; };
-  };
-private_pipe_conf: |
-  ; designates the start of this zone file in the namespace
-  $ORIGIN sandbox.gov.
-
-  ; default expiration time of all resource records without their own TTL value
-  $TTL 1h
-
-  ; @ means use $ORIGIN
-  @             IN  SOA   dns1.sandbox.gov. cloud-gov-operations.gsa.gov. ( 2018020601 30m 1h 1w 1h )
-                          ; primary dns server
-                          ; contact email address, replace @ with .
-                          ; ( serial # for zone transfers: use YYYYMMDD + 2 digit increment
-                          ; refresh every
-                          ; retry
-                          ; expire
-                          ; min TTL )
-
-  @             IN  NS  dns1.sandbox.gov.
-  @             IN  NS  dns2.sandbox.gov.
-  dns1          IN  A  10.0.1.1
-  dns2          IN  A  10.0.1.2
-
-  ; alias record for apex
-  @             IN ALIAS dualstack.production-cloudfoundry-main-748290002.us-gov-west-1.elb.amazonaws.com.
-  www           IN  CNAME  sandbox.gov.
-
-  *.app.sandbox.gov IN ALIAS dualstack.production-cloudfoundry-apps-1021484088.us-gov-west-1.elb.amazonaws.com.
-public_named_conf: |
-  zone "sandbox.gov" IN {
-    type slave;
-    file "/var/vcap/jobs/pdns/etc/sandbox.gov.zone";
-    masters {
-      10.244.8.64;
-    };
-  };
+zone-transfer-ips: 10.244.8.65,10.244.8.66
+master-ips: 10.244.8.64
 dnssec_zones:
-- zone: sandbox.gov
+- zone: example.com
   keys:
   - type: zsk
     active: active
