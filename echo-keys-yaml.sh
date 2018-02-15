@@ -9,13 +9,13 @@ KSK_FILE="$DOMAIN.ksk.private"
 
 IFS=$'\n'
 echo "- zone: $DOMAIN"
+echo "  keys:"
 echo "  - type: zsk"
 echo "    active: active"
 echo "    key: |"
 for line in `cat $ZSK_FILE`; do
   echo "      ${line}"
 done
-echo ""
 IFS=$' '
 
 IFS=$'\n'
