@@ -23,19 +23,22 @@ To customize this release for a deployment, [BOSH Operations Files](https://bosh
 
 * Generate DNSSEC keys using `generate-keys.sh DOMAIN`
 * BOSH Lite Steps
+  * Initialize bosh-lite `cloud-config` with `bosh-lite-cloud-config.yml`
+  * Edit `opsfiles/bosh-lite.yml`
+    * Replace `/instance_groups/name=pdns_private/jobs/name=pdns/properties/named_conf` with your domain name
+    * Replace `/instance_groups/name=pdns_private/jobs/name=pdns/properties/pipe_conf` with your domain records
+    * Replace `/instance_groups/name=pdns_public/jobs/name=pdns/properties/named_conf` with your domain name
   * Edit `varsfiles/bosh-lite.yml`
-    * Replace `private_named_conf` with your domain name
-    * Replace `private_pipe_conf` with your domain records
-    * Replace `public_named_conf` with your domain name
     * Replace `dnssec_zones` with the output of `echo-keys-yaml.sh DOMAIN`
-    * Deploy to bosh lite: `bosh -e vbox -d pdns deploy ./deployment.yml -l ./varsfiles/bosh-lite.yml -o ./opsfiles/staging.yml`
+  * Deploy to bosh lite: `bosh -e vbox -d pdns deploy ./deployment.yml -l ./varsfiles/bosh-lite.yml -o ./opsfiles/bosh-lite.yml`
 * Staging / Production Steps
   * Edit `opsfiles/staging.yml` or `opsfiles/production.yml`
-    * Replace `private_named_conf` with your domain name
-    * Replace `private_pipe_conf` with your domain records
-    * Replace `public_named_conf` with your domain name
+    * Replace `/instance_groups/name=pdns_private/jobs/name=pdns/properties/named_conf` with your domain name
+    * Replace `/instance_groups/name=pdns_private/jobs/name=pdns/properties/pipe_conf` with your domain records
+    * Replace `/instance_groups/name=pdns_public/jobs/name=pdns/properties/named_conf` with your domain name
+  * Create a vars file for the environment
     * Replace `dnssec_zones` with the output of `echo-keys-yaml.sh DOMAIN`.  These keys should be kept *private* and not stored in Github.  This pipeline retrieves these from a encrypted store
-    * Commit and Concourse CI will automatically deploy to staging
+  * Commit and Concourse CI will automatically deploy to staging
 
 ### Limitations
 This pipeline and the forked powerdns bosh release currently only support a single domain with the following properties:
@@ -51,4 +54,4 @@ This pipeline and the forked powerdns bosh release currently only support a sing
 Verification is done automatically via the Concourse pipeline.  To test DNSSEC locally:
 * Retrieve root keys: `dig . DNSKEY @8.8.8.8 | grep -Ev '^($|;)' > root.keys`
 * Check RRset: `dig +sigchase +dnssec +trusted-key=./root.keys example.com. A @YOUR_PUBLIC_DNS_IP | grep -P "^;; VERIFYING A RRset for example.com. with DNSKEY:\d+: success$"`
-* Check DS: `dig +sigchase +dnssec +trusted-key=./root.keys example.com. A @YOUR_PUBLIC_DNS_IP | grep 'DNSSEC validation is ok: SUCCESS'`
+* Check DS: `dig +sigchase +dnssec +trusted-key=./root.keys example.com. A @8.8.8.8 | grep 'DNSSEC validation is ok: SUCCESS'`

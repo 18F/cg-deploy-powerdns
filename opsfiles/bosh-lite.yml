@@ -1,0 +1,49 @@
+- type: replace
+  path: /instance_groups/name=pdns_private/jobs/name=pdns/properties/named_conf
+  value: |
+    zone "example.com" IN {
+      type master;
+      file "/var/vcap/jobs/pdns/etc/pipe.conf";
+      allow-update { none; };
+    };
+
+- type: replace
+  path: /instance_groups/name=pdns_private/jobs/name=pdns/properties/pipe_conf
+  value: |
+    ; designates the start of this zone file in the namespace
+    $ORIGIN example.com.
+
+    ; default expiration time of all resource records without their own TTL value
+    $TTL 1h
+
+    ; @ means use $ORIGIN
+    @             IN  SOA   dns1.sandbox.gov. cloud-gov-operations.gsa.gov. ( 2018020601 30m 1h 1w 1h )
+                            ; primary dns server
+                            ; contact email address, replace @ with .
+                            ; ( serial # for zone transfers: use YYYYMMDD + 2 digit increment
+                            ; refresh every
+                            ; retry
+                            ; expire
+                            ; min TTL )
+
+    @             IN  NS  dns1.example.com.
+    @             IN  NS  dns2.example.com.
+    dns1          IN  A  10.244.8.65
+    dns2          IN  A  10.244.8.66
+
+    ; alias record for apex
+    @             IN ALIAS dualstack.production-cloudfoundry-main-748290002.us-gov-west-1.elb.amazonaws.com.
+    www           IN  CNAME  sandbox.gov.
+
+    *.app.example.com IN ALIAS dualstack.production-cloudfoundry-apps-1021484088.us-gov-west-1.elb.amazonaws.com.
+
+- type: replace
+  path: /instance_groups/name=pdns_public/jobs/name=pdns/properties/named_conf
+  value: |
+    zone "example.com" IN {
+      type slave;
+      file "/var/vcap/jobs/pdns/etc/example.com.zone";
+      masters {
+        ((master-ips));
+      };
+    };
