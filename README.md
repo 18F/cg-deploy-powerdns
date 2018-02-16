@@ -23,13 +23,13 @@ To customize this release for a deployment, [BOSH Operations Files](https://bosh
 
 * Generate DNSSEC keys using `generate-keys.sh DOMAIN`
 * BOSH Lite Steps
-  * Initialize bosh-lite `cloud-config` with `bosh-lite-cloud-config.yml`
+  * Initialize bosh-lite `cloud-config`: `bosh -e vbox update-cloud-config ./bosh-lite-cloud-config.yml`
   * Edit `opsfiles/bosh-lite.yml`
-    * Replace `/instance_groups/name=pdns_private/jobs/name=pdns/properties/named_conf` with your domain name
-    * Replace `/instance_groups/name=pdns_private/jobs/name=pdns/properties/pipe_conf` with your domain records
-    * Replace `/instance_groups/name=pdns_public/jobs/name=pdns/properties/named_conf` with your domain name
+    * Replace contents of `/instance_groups/name=pdns_private/jobs/name=pdns/properties/named_conf` with your domain name
+    * Replace contents of `/instance_groups/name=pdns_private/jobs/name=pdns/properties/pipe_conf` with your domain records
+    * Replace contents of `/instance_groups/name=pdns_public/jobs/name=pdns/properties/named_conf` with your domain name
   * Edit `varsfiles/bosh-lite.yml`
-    * Replace `dnssec_zones` with the output of `echo-keys-yaml.sh DOMAIN`
+    * Replace contents of `dnssec_zones` with the output of `echo-keys-yaml.sh DOMAIN`
   * Deploy to bosh lite: `bosh -e vbox -d pdns deploy ./deployment.yml -l ./varsfiles/bosh-lite.yml -o ./opsfiles/bosh-lite.yml`
 * Staging / Production Steps
   * Edit `opsfiles/staging.yml` or `opsfiles/production.yml`
