@@ -79,7 +79,7 @@
     ((nameservers))
 
     ; txt records
-    _DMARC       IN TXT v=DMARC1; p=none; pct=10; fo=1; ri=86400; rua=mailto:dmarcreports@gsa.gov,mailto:reports@dmarc.cyber.dhs.gov; ruf=mailto:dmarcfailures@gsa.gov
+    _DMARC       IN TXT "v=DMARC1; p=none; pct=10; fo=1; ri=86400; rua=mailto:dmarcreports@gsa.gov,mailto:reports@dmarc.cyber.dhs.gov; ruf=mailto:dmarcfailures@gsa.gov"
 
 - type: replace
   path: /instance_groups/name=pdns_public/jobs/name=pdns/properties/named_conf
