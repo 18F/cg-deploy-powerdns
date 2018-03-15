@@ -59,7 +59,7 @@
     $TTL 1h
 
     ; @ means use $ORIGIN
-    @             IN  SOA   ns1.sandbox.gov. cloud-gov-operations.gsa.gov. ( 2018020801 30m 1h 1w 1h )
+    @             IN  SOA   ns1.sandbox.gov. cloud-gov-operations.gsa.gov. ( 2018031500 30m 1h 1w 1h )
                             ; primary dns server
                             ; contact email address, replace @ with .
                             ; ( serial # for zone transfers: use YYYYMMDD + 2 digit increment
