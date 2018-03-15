@@ -29,11 +29,15 @@ instance_groups:
   - release: pdns
     name: pdns
     properties:
+      mode: gsqlite3
+      sqlite:
+        database: backend.db
       pdns_conf: |
+        api=yes
+        api-key=((api-key))
         local-ipv6=
-        launch=bind
-        bind-config=/var/vcap/jobs/pdns/etc/named.conf
-        bind-ignore-broken-records=yes
+        launch=gsqlite3
+        gsqlite3-database=/var/vcap/store/pdns/backend.db
         allow-axfr-ips=((zone-transfer-ips))
         daemon=yes
         disable-axfr=no
@@ -45,8 +49,6 @@ instance_groups:
         master=yes
         slave=no
         outgoing-axfr-expand-alias=yes
-      named_conf: ((private_named_conf))
-      pipe_conf: ((private_pipe_conf))
       dnssec:
         enabled: false
 
