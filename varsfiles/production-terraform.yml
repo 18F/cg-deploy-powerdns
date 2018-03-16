@@ -1,2 +1,3 @@
+webserver-allow-from: (( concat "127.0.0.1/32, " terraform_outputs.production_concourse_subnet_cidr ", " terraform_outputs.staging_concourse_subnet_cidr ))
 zone-transfer-ips: (( concat terraform_outputs.public_subnet_az1_cidr ", " terraform_outputs.public_subnet_az2_cidr ))
 master-ips: (( join "; " terraform_outputs.production_dns_private_ips ))

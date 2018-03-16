@@ -35,6 +35,8 @@ instance_groups:
       pdns_conf: |
         api=yes
         api-key=((api-key))
+        webserver-address=0.0.0.0
+        webserver-allow-from=((webserver-allow-from))
         local-ipv6=
         launch=gsqlite3
         gsqlite3-database=/var/vcap/store/pdns/backend.db
