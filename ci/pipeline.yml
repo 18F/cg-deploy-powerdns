@@ -27,6 +27,12 @@ resources:
     uri: ((pdns-config-uri))
     branch: ((pdns-config-branch))
 
+- name: pipeline-tasks
+  type: git
+  source:
+    uri: ((pipeline-tasks-uri))
+    branch: ((pipeline-tasks-branch))
+
 - name: pdns-release
   type: s3-iam
   source:
@@ -124,11 +130,6 @@ jobs:
       - terraform-yaml/state.yml
       - terraform-secrets/terraform.yml
       - common/secrets.yml
-  - task: smoke-test-rrsigs
-    file: pdns-config/ci/verify-dnssec-rrsig.yml
-    params:
-      ZONES: sandbox.gov
-      ENVIRONMENT: staging
   on_success:
     put: slack
     params:
@@ -143,6 +144,70 @@ jobs:
     params:
       text: |
         :x: FAILED to deploy dns on staging
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+
+- name: terraform-powerdns-plan-staging
+  plan:
+  - aggregate:
+    - get: pdns-config
+      trigger: true
+    - get: pipeline-tasks
+  - task: terraform-plan
+    file: pipeline-tasks/terraform-apply.yml
+    input_mapping:
+      terraform-templates: pdns-config
+    params: &terraform-staging-params
+      TERRAFORM_ACTION: plan
+      STACK_NAME: dns-staging
+      TEMPLATE_SUBDIR: terraform
+      AWS_DEFAULT_REGION: ((aws-region))
+      S3_TFSTATE_BUCKET: ((dns-tf-state-bucket))
+      TF_VAR_powerdns_server_url: ((powerdns-server-url-staging))
+      TF_VAR_powerdns_api_key: ((powerdns-api-key-staging))
+  - &notify-slack
+    put: slack
+    params:
+      text_file: terraform-state/message.txt
+      text:  |
+        :terraform: $BUILD_JOB_NAME needs review
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: ((slack-channel))
+      username: ((slack-username))
+      icon_url: ((slack-icon-url))
+
+- name: terraform-powerdns-apply-staging
+  plan:
+  - aggregate:
+    - get: pdns-config
+      passed: [terraform-powerdns-plan-staging]
+    - get: pipeline-tasks
+  - task: terraform-apply
+    file: pipeline-tasks/terraform-apply.yml
+    input_mapping:
+      terraform-templates: pdns-config
+    params:
+      <<: *terraform-staging-params
+      TERRAFORM_ACTION: apply
+
+- name: smoke-test-staging
+  plan:
+  - aggregate:
+    - get: pdns-config
+      passed: [terraform-powerdns-apply-staging]
+      trigger: true
+  - task: smoke-test-rrsigs
+    file: pdns-config/ci/verify-dnssec-rrsig.yml
+    params:
+      ZONES: sandbox.gov
+      ENVIRONMENT: staging
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: Smoke tests failed on staging powerdns
         <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
       channel: ((slack-channel))
       username: ((slack-username))
