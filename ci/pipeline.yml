@@ -198,11 +198,11 @@ jobs:
     - get: pdns-config
       passed: [terraform-powerdns-apply-staging]
       trigger: true
-  - task: smoke-test-rrsigs
-    file: pdns-config/ci/verify-dnssec-rrsig.yml
-    params:
-      ZONES: sandbox.gov
-      ENVIRONMENT: staging
+  # - task: smoke-test-rrsigs
+  #   file: pdns-config/ci/verify-dnssec-rrsig.yml
+  #   params:
+  #     ZONES: sandbox.gov
+  #     ENVIRONMENT: staging
   on_failure:
     put: slack
     params:
@@ -330,15 +330,15 @@ jobs:
       trigger: true
     - get: tests-timer
       trigger: true
-  - task: smoke-test-rrsigs
-    file: pdns-config/ci/verify-dnssec-rrsig.yml
-    params:
-      ZONES: sandbox.gov
-      ENVIRONMENT: production
-  - task: smoke-test-ds
-    file: pdns-config/ci/verify-dnssec-ds.yml
-    params:
-      ZONES: sandbox.gov
+  # - task: smoke-test-rrsigs
+  #   file: pdns-config/ci/verify-dnssec-rrsig.yml
+  #   params:
+  #     ZONES: sandbox.gov
+  #     ENVIRONMENT: production
+  # - task: smoke-test-ds
+  #   file: pdns-config/ci/verify-dnssec-ds.yml
+  #   params:
+  #     ZONES: sandbox.gov
   on_success:
     put: slack
     params:
