@@ -50,3 +50,12 @@
         ((master-ips));
       };
     };
+
+# turn off the sandbox zone stuff for now because it's broken
+- type: replace
+  path: /instance_groups/name=pdns_private/jobs/name=pdns/properties/dnssec/enabled
+  value: false
+
+- type: replace
+  path: /instance_groups/name=pdns_public/jobs/name=pdns/properties/dnssec/enabled
+  value: false

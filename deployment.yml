@@ -52,7 +52,8 @@ instance_groups:
         slave=no
         outgoing-axfr-expand-alias=yes
       dnssec:
-        enabled: false
+        enabled: true
+        zones: ((dnssec_zones))
 
 - name: pdns_public
   instances: 2
