@@ -36,10 +36,10 @@ resources:
     regexp: pdns-(.*).tgz
     region_name: ((aws-region))
 
-- name: stemcell
+- name: stemcell-xenial
   type: bosh-io-stemcell
   source:
-    name: bosh-aws-xen-hvm-ubuntu-trusty-go_agent
+    name: bosh-aws-xen-hvm-ubuntu-xenial-go_agent
 
 - name: terraform-yaml
   type: s3-iam
@@ -98,7 +98,7 @@ jobs:
       trigger: true
     - get: pdns-release
       trigger: true
-    - get: stemcell
+    - get: stemcell-xenial
       trigger: true
     - get: terraform-yaml
     - get: common-staging
@@ -111,7 +111,7 @@ jobs:
     params:
       manifest: pdns-config/deployment.yml
       stemcells:
-      - stemcell/*.tgz
+      - stemcell-xenial/*.tgz
       releases:
       - pdns-release/*.tgz
       ops_files:
@@ -212,7 +212,7 @@ jobs:
     - get: pdns-release
       passed: [deploy-pdns-staging]
       trigger: true
-    - get: stemcell
+    - get: stemcell-xenial
       passed: [deploy-pdns-staging]
       trigger: true
     - get: terraform-yaml
@@ -230,7 +230,7 @@ jobs:
       dry_run: true
       no_redact: true
       stemcells:
-      - stemcell/*.tgz
+      - stemcell-xenial/*.tgz
       releases:
       - pdns-release/*.tgz
       ops_files:
@@ -265,7 +265,7 @@ jobs:
       passed: [plan-pdns-production]
     - get: pdns-release
       passed: [plan-pdns-production]
-    - get: stemcell
+    - get: stemcell-xenial
       passed: [plan-pdns-production]
     - get: terraform-yaml
       passed: [plan-pdns-production]
@@ -279,7 +279,7 @@ jobs:
     params:
       manifest: pdns-config/deployment.yml
       stemcells:
-      - stemcell/*.tgz
+      - stemcell-xenial/*.tgz
       releases:
       - pdns-release/*.tgz
       ops_files:
